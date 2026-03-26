@@ -1,0 +1,8 @@
+dist/
+build/
+coverage/
+node_modules/
+*.min.js
+package-lock.json
+yarn.lock
+pnpm-lock.yaml

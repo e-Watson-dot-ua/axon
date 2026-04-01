@@ -7,20 +7,25 @@ import { createApp, Logger, securityHeaders, cors, rateLimit } from '../src/inde
 describe('Graceful shutdown', () => {
   it('should drain in-flight requests before closing', async () => {
     const app = createApp();
+    let handlerCompleted = false;
     app.get('/slow', async (ctx) => {
-      await new Promise((r) => setTimeout(r, 100));
+      await new Promise((r) => setTimeout(r, 50));
+      handlerCompleted = true;
       ctx.send({ done: true });
     });
-    const { port } = await app.listen({ port: 0, keepAliveTimeout: 500 });
+    const { port } = await app.listen({ port: 0, keepAliveTimeout: 2000 });
 
     // Start a request, then close the server while it's in-flight
     const promise = fetch(`http://127.0.0.1:${port}/slow`);
-    await new Promise((r) => setTimeout(r, 20)); // let request start
-    await app.close({ timeout: 3000 });
+    await new Promise((r) => setTimeout(r, 10)); // let request start
+    const closePromise = app.close({ timeout: 5000 });
 
     const res = await promise;
     assert.equal(res.status, 200);
     assert.equal((await res.json()).done, true);
+    assert.equal(handlerCompleted, true);
+
+    await closePromise;
   });
 
   it('should support AbortSignal for shutdown', async () => {

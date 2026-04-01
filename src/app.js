@@ -7,7 +7,16 @@ import { runHooks } from './lifecycle/pipeline.js';
 import { parseBody } from './parsers/body.parser.js';
 import { Validator } from './validation/validator.js';
 import { createStaticHandler } from './static/static.handler.js';
-import { Logger } from './utils/logger.js';
+import { Logger as FallbackLogger } from './utils/logger.js';
+
+/** @type {typeof FallbackLogger} */
+let Logger = FallbackLogger;
+try {
+  const mod = await import('@e-watson/axon-logger');
+  if (mod.Logger) Logger = mod.Logger;
+} catch {
+  // @e-watson/axon-logger not installed — use built-in fallback
+}
 
 export class Axon {
   /** @type {http.Server | null} */
@@ -281,6 +290,11 @@ export class Axon {
       const server = this.#server;
       this.#server = null;
 
+      // Close idle keep-alive connections, let in-flight finish
+      if (typeof server.closeIdleConnections === 'function') {
+        server.closeIdleConnections();
+      }
+
       // Stop accepting new connections
       server.close((err) => {
         clearTimeout(timer);
@@ -290,7 +304,9 @@ export class Axon {
 
       // Force-close after timeout
       const timer = setTimeout(() => {
-        // Destroy all active connections
+        if (typeof server.closeAllConnections === 'function') {
+          server.closeAllConnections();
+        }
         for (const res of this.#activeResponses) {
           res.destroy();
         }

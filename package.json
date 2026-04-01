@@ -38,6 +38,12 @@
     "bench": "node benchmarks/run.js",
     "prepublishOnly": "npm run lint && npm test"
   },
+  "peerDependencies": {
+    "@e-watson/axon-logger": ">=0.0.1"
+  },
+  "peerDependenciesMeta": {
+    "@e-watson/axon-logger": { "optional": true }
+  },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
     "@types/node": ">=18.0.0",

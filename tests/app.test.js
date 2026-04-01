@@ -1,6 +1,7 @@
 import { describe, it, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { createApp } from '../src/app.js';
+import { HTTP } from '../src/utils/http.status.js';
 
 describe('createApp — bare server', () => {
   /** @type {import('./app.js').Axon | null} */
@@ -26,7 +27,7 @@ describe('createApp — bare server', () => {
     const res = await fetch(`http://127.0.0.1:${port}/anything`);
     const body = await res.json();
 
-    assert.equal(res.status, 404);
+    assert.equal(res.status, HTTP.NOT_FOUND);
     assert.equal(body.error, 'Not Found');
   });
 
@@ -61,19 +62,19 @@ describe('Axon — routing', () => {
     const res = await fetch(`http://127.0.0.1:${port}/hello`);
     const body = await res.json();
 
-    assert.equal(res.status, 200);
+    assert.equal(res.status, HTTP.OK);
     assert.equal(body.msg, 'hi');
   });
 
   it('should route POST requests', async () => {
     app = createApp();
-    app.post('/items', (ctx) => ctx.status(201).send({ created: true }));
+    app.post('/items', (ctx) => ctx.status(HTTP.CREATED).send({ created: true }));
     const { port } = await app.listen({ port: 0 });
 
     const res = await fetch(`http://127.0.0.1:${port}/items`, { method: 'POST' });
     const body = await res.json();
 
-    assert.equal(res.status, 201);
+    assert.equal(res.status, HTTP.CREATED);
     assert.equal(body.created, true);
   });
 
@@ -94,7 +95,7 @@ describe('Axon — routing', () => {
     const { port } = await app.listen({ port: 0 });
 
     const res = await fetch(`http://127.0.0.1:${port}/only-get`, { method: 'DELETE' });
-    assert.equal(res.status, 404);
+    assert.equal(res.status, HTTP.NOT_FOUND);
   });
 
   it('should support app.all() for any method', async () => {
@@ -127,7 +128,7 @@ describe('Axon — routing', () => {
     app = createApp();
     app.get('/boom', () => {
       const err = new Error('fail');
-      /** @type {any} */ (err).statusCode = 422;
+      /** @type {any} */ (err).statusCode = HTTP.UNPROCESSABLE_ENTITY;
       throw err;
     });
     const { port } = await app.listen({ port: 0 });
@@ -135,7 +136,7 @@ describe('Axon — routing', () => {
     const res = await fetch(`http://127.0.0.1:${port}/boom`);
     const body = await res.json();
 
-    assert.equal(res.status, 422);
+    assert.equal(res.status, HTTP.UNPROCESSABLE_ENTITY);
     assert.equal(body.error, 'fail');
   });
 
@@ -194,7 +195,7 @@ describe('Axon — route grouping', () => {
     const { port } = await app.listen({ port: 0 });
 
     const res = await fetch(`http://127.0.0.1:${port}/test`);
-    assert.equal(res.status, 404);
+    assert.equal(res.status, HTTP.NOT_FOUND);
   });
 });
 
@@ -255,7 +256,7 @@ describe('Axon — global middleware', () => {
     const { port } = await app.listen({ port: 0 });
 
     const res = await fetch(`http://127.0.0.1:${port}/nope`);
-    assert.equal(res.status, 404);
+    assert.equal(res.status, HTTP.NOT_FOUND);
     assert.equal(res.headers.get('x-global'), 'yes');
   });
 
@@ -287,13 +288,13 @@ describe('Axon — global middleware', () => {
   it('should short-circuit if global middleware does not call next', async () => {
     app = createApp();
     app.use(async (ctx) => {
-      ctx.status(403).send({ error: 'Forbidden' });
+      ctx.status(HTTP.FORBIDDEN).send({ error: 'Forbidden' });
     });
     app.get('/test', (ctx) => ctx.send('should not reach'));
     const { port } = await app.listen({ port: 0 });
 
     const res = await fetch(`http://127.0.0.1:${port}/test`);
-    assert.equal(res.status, 403);
+    assert.equal(res.status, HTTP.FORBIDDEN);
     assert.equal((await res.json()).error, 'Forbidden');
   });
 });
@@ -382,7 +383,7 @@ describe('Axon — lifecycle hooks', () => {
   it('should route errors through onError hook', async () => {
     app = createApp();
     app.onError(async (err, ctx) => {
-      ctx.status(err.statusCode ?? 500).send({ custom: err.message });
+      ctx.status(err.statusCode ?? HTTP.INTERNAL_SERVER_ERROR).send({ custom: err.message });
     });
     app.get('/boom', () => {
       throw new Error('test error');
@@ -391,7 +392,7 @@ describe('Axon — lifecycle hooks', () => {
 
     const res = await fetch(`http://127.0.0.1:${port}/boom`);
     const body = await res.json();
-    assert.equal(res.status, 500);
+    assert.equal(res.status, HTTP.INTERNAL_SERVER_ERROR);
     assert.equal(body.custom, 'test error');
   });
 
@@ -399,7 +400,7 @@ describe('Axon — lifecycle hooks', () => {
     let handlerCalled = false;
     app = createApp();
     app.addHook('onRequest', async (ctx) => {
-      ctx.status(401).send({ error: 'Unauthorized' });
+      ctx.status(HTTP.UNAUTHORIZED).send({ error: 'Unauthorized' });
     });
     app.get('/test', () => {
       handlerCalled = true;
@@ -407,7 +408,7 @@ describe('Axon — lifecycle hooks', () => {
     const { port } = await app.listen({ port: 0 });
 
     const res = await fetch(`http://127.0.0.1:${port}/test`);
-    assert.equal(res.status, 401);
+    assert.equal(res.status, HTTP.UNAUTHORIZED);
     assert.equal(handlerCalled, false);
   });
 
@@ -475,7 +476,7 @@ describe('Axon — body parsing', () => {
       headers: { 'Content-Type': 'application/json' },
       body: 'not json{',
     });
-    assert.equal(res.status, 400);
+    assert.equal(res.status, HTTP.BAD_REQUEST);
   });
 });
 
@@ -507,7 +508,7 @@ describe('Axon — validation', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({}),
     });
-    assert.equal(res.status, 400);
+    assert.equal(res.status, HTTP.BAD_REQUEST);
     const body = await res.json();
     assert.ok(body.error.includes('Validation failed'));
   });
@@ -531,7 +532,7 @@ describe('Axon — validation', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: 'axon' }),
     });
-    assert.equal(res.status, 200);
+    assert.equal(res.status, HTTP.OK);
   });
 
   it('should support custom validator via setValidator', async () => {
@@ -548,6 +549,6 @@ describe('Axon — validation', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ anything: true }),
     });
-    assert.equal(res.status, 400);
+    assert.equal(res.status, HTTP.BAD_REQUEST);
   });
 });

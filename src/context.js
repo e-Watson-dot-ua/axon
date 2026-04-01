@@ -1,4 +1,5 @@
 import { getRequestId } from './utils/request.id.js';
+import { HTTP } from './utils/http.status.js';
 import { parseCookies } from './utils/header.utils.js';
 
 /**
@@ -221,7 +222,7 @@ export class Ctx {
    * @param {string} url
    * @param {number} [code=302]
    */
-  redirect(url, code = 302) {
+  redirect(url, code = HTTP.FOUND) {
     this.status(code).header('Location', url);
     this.send('');
   }

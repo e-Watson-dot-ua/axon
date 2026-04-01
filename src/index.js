@@ -9,5 +9,8 @@ export { cors } from './plugins/cors.js';
 export { compression } from './plugins/compression.js';
 export { rateLimit } from './plugins/rate.limit.js';
 
+// HTTP status constants
+export { HTTP } from './utils/http.status.js';
+
 // Cluster
 export { launch } from './cluster/cluster.launcher.js';

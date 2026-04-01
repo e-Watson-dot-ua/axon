@@ -5,6 +5,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { getMimeType } from '../../src/static/mime.map.js';
 import { createApp } from '../../src/app.js';
+import { HTTP } from '../../src/utils/http.status.js';
 
 describe('getMimeType', () => {
   it('should return correct MIME for .html', () => {
@@ -57,7 +58,7 @@ describe('app.static()', () => {
     const { port } = await app.listen({ port: 0 });
 
     const res = await fetch(`http://127.0.0.1:${port}/public/hello.txt`);
-    assert.equal(res.status, 200);
+    assert.equal(res.status, HTTP.OK);
     assert.ok(res.headers.get('content-type').includes('text/plain'));
     assert.ok(res.headers.get('etag'));
     assert.ok(res.headers.get('last-modified'));
@@ -70,7 +71,7 @@ describe('app.static()', () => {
     const { port } = await app.listen({ port: 0 });
 
     const res = await fetch(`http://127.0.0.1:${port}/public/data.json`);
-    assert.equal(res.status, 200);
+    assert.equal(res.status, HTTP.OK);
     assert.ok(res.headers.get('content-type').includes('application/json'));
   });
 
@@ -80,7 +81,7 @@ describe('app.static()', () => {
     const { port } = await app.listen({ port: 0 });
 
     const res = await fetch(`http://127.0.0.1:${port}/public/sub`);
-    assert.equal(res.status, 200);
+    assert.equal(res.status, HTTP.OK);
     const text = await res.text();
     assert.ok(text.includes('<h1>Index</h1>'));
   });
@@ -91,7 +92,7 @@ describe('app.static()', () => {
     const { port } = await app.listen({ port: 0 });
 
     const res = await fetch(`http://127.0.0.1:${port}/public/nope.txt`);
-    assert.equal(res.status, 404);
+    assert.equal(res.status, HTTP.NOT_FOUND);
   });
 
   it('should prevent directory traversal', async () => {
@@ -100,7 +101,7 @@ describe('app.static()', () => {
     const { port } = await app.listen({ port: 0 });
 
     const res = await fetch(`http://127.0.0.1:${port}/public/..%2F..%2Fetc%2Fpasswd`);
-    assert.ok([403, 404].includes(res.status));
+    assert.ok([HTTP.FORBIDDEN, HTTP.NOT_FOUND].includes(res.status));
   });
 
   it('should return 304 on If-None-Match', async () => {
@@ -114,6 +115,6 @@ describe('app.static()', () => {
     const second = await fetch(`http://127.0.0.1:${port}/public/hello.txt`, {
       headers: { 'If-None-Match': etag },
     });
-    assert.equal(second.status, 304);
+    assert.equal(second.status, HTTP.NOT_MODIFIED);
   });
 });

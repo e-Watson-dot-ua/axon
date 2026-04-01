@@ -1,6 +1,7 @@
 import { describe, it, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { createApp } from '../src/index.js';
+import { HTTP } from '../src/utils/http.status.js';
 
 describe('Performance smoke test', () => {
   /** @type {import('./app.js').Axon | null} */
@@ -21,7 +22,7 @@ describe('Performance smoke test', () => {
 
     for (let i = 0; i < count; i++) {
       const res = await fetch(`http://127.0.0.1:${port}/json`);
-      assert.equal(res.status, 200);
+      assert.equal(res.status, HTTP.OK);
       await res.json();
     }
 

@@ -2,6 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { validateSchema } from '../../src/validation/schema.validator.js';
 import { Validator } from '../../src/validation/validator.js';
+import { HTTP } from '../../src/utils/http.status.js';
 
 describe('validateSchema', () => {
   it('should pass valid object', () => {
@@ -96,7 +97,7 @@ describe('Validator (strategy)', () => {
     const v = new Validator();
     assert.throws(
       () => v.validate({ body: { x: 1 } }, { body: { type: 'string' } }),
-      (err) => /** @type {any} */ (err).statusCode === 400,
+      (err) => /** @type {any} */ (err).statusCode === HTTP.BAD_REQUEST,
     );
   });
 
@@ -123,7 +124,7 @@ describe('Validator (strategy)', () => {
             query: { type: 'number' },
           },
         ),
-      (err) => /** @type {any} */ (err).statusCode === 400,
+      (err) => /** @type {any} */ (err).statusCode === HTTP.BAD_REQUEST,
     );
   });
 

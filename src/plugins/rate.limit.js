@@ -1,4 +1,5 @@
 import { HttpError } from '../errors/http.error.js';
+import { HTTP } from '../utils/http.status.js';
 
 /**
  * In-memory token-bucket rate limiter plugin.
@@ -47,7 +48,7 @@ export function rateLimit(app, opts = {}) {
 
     if (entry.count > max) {
       ctx.header('Retry-After', retryAfter);
-      throw new HttpError(429, 'Too Many Requests');
+      throw new HttpError(HTTP.TOO_MANY_REQUESTS, 'Too Many Requests');
     }
   });
 }

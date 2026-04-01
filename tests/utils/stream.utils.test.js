@@ -2,6 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { Readable } from 'node:stream';
 import { collectBody } from '../../src/utils/stream.utils.js';
+import { HTTP } from '../../src/utils/http.status.js';
 
 /**
  * Create a mock IncomingMessage-like readable stream.
@@ -39,7 +40,7 @@ describe('collectBody', () => {
     const req = mockReq('a'.repeat(100));
 
     await assert.rejects(() => collectBody(req, { limit: 10 }), (err) => {
-      assert.equal(/** @type {any} */ (err).statusCode, 413);
+      assert.equal(/** @type {any} */ (err).statusCode, HTTP.PAYLOAD_TOO_LARGE);
       return true;
     });
   });

@@ -1,6 +1,7 @@
 import { describe, it, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { createApp, HttpError } from '../src/index.js';
+import { HTTP } from '../src/utils/http.status.js';
 
 describe('Integration — full lifecycle', () => {
   /** @type {import('./app.js').Axon | null} */
@@ -37,7 +38,7 @@ describe('Integration — full lifecycle', () => {
     // Error handler
     app.onError(async (err, ctx) => {
       log.push('onError');
-      ctx.status(err.statusCode ?? 500).send({ error: err.message });
+      ctx.status(err.statusCode ?? HTTP.INTERNAL_SERVER_ERROR).send({ error: err.message });
     });
 
     // Routes
@@ -57,13 +58,13 @@ describe('Integration — full lifecycle', () => {
         },
       },
       handler(ctx) {
-        ctx.status(201).send({ id: 1, ...ctx.body });
+        ctx.status(HTTP.CREATED).send({ id: 1, ...ctx.body });
       },
     });
 
     app.get('/users/:id', (ctx) => {
       if (ctx.params.id === '999') {
-        throw new HttpError(404, 'User not found');
+        throw new HttpError(HTTP.NOT_FOUND, 'User not found');
       }
       ctx.send({ id: ctx.params.id, name: 'Alice' });
     });
@@ -76,7 +77,7 @@ describe('Integration — full lifecycle', () => {
 
     // 1. Health check
     const health = await fetch(`http://127.0.0.1:${port}/health`);
-    assert.equal(health.status, 200);
+    assert.equal(health.status, HTTP.OK);
     assert.deepEqual(await health.json(), { status: 'ok' });
 
     // 2. POST with valid body
@@ -86,7 +87,7 @@ describe('Integration — full lifecycle', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: 'Bob', email: 'bob@example.com' }),
     });
-    assert.equal(createUser.status, 201);
+    assert.equal(createUser.status, HTTP.CREATED);
     const created = await createUser.json();
     assert.equal(created.name, 'Bob');
     assert.equal(created.email, 'bob@example.com');
@@ -97,16 +98,16 @@ describe('Integration — full lifecycle', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: '' }),
     });
-    assert.equal(badUser.status, 400);
+    assert.equal(badUser.status, HTTP.BAD_REQUEST);
 
     // 4. GET with param
     const getUser = await fetch(`http://127.0.0.1:${port}/users/42`);
-    assert.equal(getUser.status, 200);
+    assert.equal(getUser.status, HTTP.OK);
     assert.equal((await getUser.json()).id, '42');
 
     // 5. GET with param triggering HttpError
     const notFound = await fetch(`http://127.0.0.1:${port}/users/999`);
-    assert.equal(notFound.status, 404);
+    assert.equal(notFound.status, HTTP.NOT_FOUND);
     assert.equal((await notFound.json()).error, 'User not found');
 
     // 6. Route group
@@ -115,7 +116,7 @@ describe('Integration — full lifecycle', () => {
 
     // 7. 404 for unknown route
     const unknown = await fetch(`http://127.0.0.1:${port}/nope`);
-    assert.equal(unknown.status, 404);
+    assert.equal(unknown.status, HTTP.NOT_FOUND);
 
     // Wait for async hooks
     await new Promise((r) => setTimeout(r, 50));

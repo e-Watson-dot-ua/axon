@@ -1,4 +1,5 @@
 import { HttpError } from '../errors/http.error.js';
+import { HTTP } from './http.status.js';
 
 const DEFAULT_LIMIT = 1024 * 1024; // 1 MiB
 
@@ -21,7 +22,7 @@ export function collectBody(req, opts = {}) {
       size += chunk.length;
       if (size > limit) {
         req.destroy();
-        reject(new HttpError(413, 'Payload Too Large'));
+        reject(new HttpError(HTTP.PAYLOAD_TOO_LARGE, 'Payload Too Large'));
         return;
       }
       chunks.push(chunk);

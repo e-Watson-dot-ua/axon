@@ -1,3 +1,5 @@
+import { HTTP } from '../utils/http.status.js';
+
 /**
  * HTTP-aware error with a status code.
  */
@@ -25,21 +27,21 @@ export class HttpError extends Error {
 
 /** @type {Record<number, string>} */
 const STATUS_MESSAGES = {
-  400: 'Bad Request',
-  401: 'Unauthorized',
-  403: 'Forbidden',
-  404: 'Not Found',
-  405: 'Method Not Allowed',
-  408: 'Request Timeout',
-  409: 'Conflict',
-  410: 'Gone',
-  413: 'Payload Too Large',
-  415: 'Unsupported Media Type',
-  422: 'Unprocessable Entity',
-  429: 'Too Many Requests',
-  500: 'Internal Server Error',
-  501: 'Not Implemented',
-  502: 'Bad Gateway',
-  503: 'Service Unavailable',
-  504: 'Gateway Timeout',
+  [HTTP.BAD_REQUEST]: 'Bad Request',
+  [HTTP.UNAUTHORIZED]: 'Unauthorized',
+  [HTTP.FORBIDDEN]: 'Forbidden',
+  [HTTP.NOT_FOUND]: 'Not Found',
+  [HTTP.METHOD_NOT_ALLOWED]: 'Method Not Allowed',
+  [HTTP.REQUEST_TIMEOUT]: 'Request Timeout',
+  [HTTP.CONFLICT]: 'Conflict',
+  [HTTP.GONE]: 'Gone',
+  [HTTP.PAYLOAD_TOO_LARGE]: 'Payload Too Large',
+  [HTTP.UNSUPPORTED_MEDIA_TYPE]: 'Unsupported Media Type',
+  [HTTP.UNPROCESSABLE_ENTITY]: 'Unprocessable Entity',
+  [HTTP.TOO_MANY_REQUESTS]: 'Too Many Requests',
+  [HTTP.INTERNAL_SERVER_ERROR]: 'Internal Server Error',
+  [HTTP.NOT_IMPLEMENTED]: 'Not Implemented',
+  [HTTP.BAD_GATEWAY]: 'Bad Gateway',
+  [HTTP.SERVICE_UNAVAILABLE]: 'Service Unavailable',
+  [HTTP.GATEWAY_TIMEOUT]: 'Gateway Timeout',
 };

@@ -5,6 +5,7 @@ import { parseBody } from '../../src/parsers/body.parser.js';
 import { parseJson } from '../../src/parsers/json.parser.js';
 import { parseText } from '../../src/parsers/text.parser.js';
 import { parseUrlencoded } from '../../src/parsers/urlencoded.parser.js';
+import { HTTP } from '../../src/utils/http.status.js';
 
 /**
  * Create a mock request with body and content-type.
@@ -26,7 +27,7 @@ describe('parseJson', () => {
 
   it('should throw 400 on invalid JSON', () => {
     assert.throws(() => parseJson(Buffer.from('not json')), (err) => {
-      assert.equal(/** @type {any} */ (err).statusCode, 400);
+      assert.equal(/** @type {any} */ (err).statusCode, HTTP.BAD_REQUEST);
       return true;
     });
   });

@@ -1,6 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { Ctx } from '../src/context.js';
+import { HTTP } from '../src/utils/http.status.js';
 
 /**
  * Creates a minimal mock req/res pair.
@@ -19,7 +20,7 @@ function createMock(opts = {}) {
   const _headers = {};
   let _ended = false;
   let _body = '';
-  let _statusCode = 200;
+  let _statusCode = HTTP.OK;
 
   const res = {
     get statusCode() { return _statusCode; },
@@ -59,9 +60,9 @@ describe('Ctx', () => {
     const { req, res } = createMock();
     const ctx = new Ctx(/** @type {any} */ (req), /** @type {any} */ (res));
 
-    const ret = ctx.status(201).header('X-Custom', 'hello');
+    const ret = ctx.status(HTTP.CREATED).header('X-Custom', 'hello');
     assert.equal(ret, ctx);
-    assert.equal(res.statusCode, 201);
+    assert.equal(res.statusCode, HTTP.CREATED);
     assert.equal(res._internal.headers['x-custom'], 'hello');
   });
 
@@ -112,7 +113,7 @@ describe('Ctx', () => {
 
     ctx.redirect('/login');
 
-    assert.equal(res.statusCode, 302);
+    assert.equal(res.statusCode, HTTP.FOUND);
     assert.equal(res._internal.headers['location'], '/login');
   });
 

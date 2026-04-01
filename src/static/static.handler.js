@@ -4,6 +4,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { getMimeType } from './mime.map.js';
 import { HttpError } from '../errors/http.error.js';
+import { HTTP } from '../utils/http.status.js';
 
 /**
  * Create a static file serving handler.
@@ -24,14 +25,14 @@ export function createStaticHandler(rootDir, opts = {}) {
     // Resolve to absolute, then verify it's within root (prevent traversal)
     const filePath = path.resolve(root, requestedPath);
     if (!filePath.startsWith(root + path.sep) && filePath !== root) {
-      throw new HttpError(403, 'Forbidden');
+      throw new HttpError(HTTP.FORBIDDEN, 'Forbidden');
     }
 
     let stat;
     try {
       stat = await fs.stat(filePath);
     } catch {
-      throw new HttpError(404, 'Not Found');
+      throw new HttpError(HTTP.NOT_FOUND, 'Not Found');
     }
 
     // If directory, try index file
@@ -41,12 +42,12 @@ export function createStaticHandler(rootDir, opts = {}) {
       try {
         stat = await fs.stat(resolvedPath);
       } catch {
-        throw new HttpError(404, 'Not Found');
+        throw new HttpError(HTTP.NOT_FOUND, 'Not Found');
       }
     }
 
     if (!stat.isFile()) {
-      throw new HttpError(404, 'Not Found');
+      throw new HttpError(HTTP.NOT_FOUND, 'Not Found');
     }
 
     // ETag from mtime + size
@@ -57,7 +58,7 @@ export function createStaticHandler(rootDir, opts = {}) {
 
     // Check If-None-Match
     if (ctx.headers['if-none-match'] === `"${etag}"`) {
-      ctx.status(304);
+      ctx.status(HTTP.NOT_MODIFIED);
       ctx.send('');
       return;
     }

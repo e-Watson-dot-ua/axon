@@ -1,3 +1,5 @@
+import { HTTP } from '../utils/http.status.js';
+
 /**
  * CORS plugin.
  *
@@ -68,7 +70,7 @@ export function cors(app, opts = {}) {
       if (opts.maxAge !== undefined) {
         ctx.header('Access-Control-Max-Age', String(opts.maxAge));
       }
-      ctx.status(204).send('');
+      ctx.status(HTTP.NO_CONTENT).send('');
     }
   });
 }

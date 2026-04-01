@@ -1,5 +1,6 @@
 import { validateSchema } from './schema.validator.js';
 import { HttpError } from '../errors/http.error.js';
+import { HTTP } from '../utils/http.status.js';
 
 /**
  * Validator strategy - wraps a validation function.
@@ -39,7 +40,7 @@ export class Validator {
     }
 
     if (allErrors.length > 0) {
-      throw new HttpError(400, 'Validation failed', { errors: allErrors });
+      throw new HttpError(HTTP.BAD_REQUEST, 'Validation failed', { errors: allErrors });
     }
   }
 }

@@ -8,6 +8,7 @@ import { parseBody } from './parsers/body.parser.js';
 import { Validator } from './validation/validator.js';
 import { createStaticHandler } from './static/static.handler.js';
 import { Logger as FallbackLogger } from './utils/logger.js';
+import { HTTP } from './utils/http.status.js';
 
 /** @type {typeof FallbackLogger} */
 let Logger = FallbackLogger;
@@ -358,7 +359,7 @@ export class Axon {
       timer = setTimeout(() => {
         if (!res.writableEnded) {
           const ctx = new Ctx(req, res);
-          ctx.status(408).send({ error: 'Request Timeout' });
+          ctx.status(HTTP.REQUEST_TIMEOUT).send({ error: 'Request Timeout' });
         }
       }, timeout);
       if (timer.unref) timer.unref();
@@ -399,7 +400,7 @@ export class Axon {
         const match = this.#router.find(ctx.method ?? 'GET', ctx.path);
 
         if (!match) {
-          ctx.status(404).send({ error: 'Not Found' });
+          ctx.status(HTTP.NOT_FOUND).send({ error: 'Not Found' });
           return;
         }
 
@@ -431,7 +432,7 @@ export class Axon {
 
       // If nothing sent a response, send 404
       if (!ctx.sent) {
-        ctx.status(404).send({ error: 'Not Found' });
+        ctx.status(HTTP.NOT_FOUND).send({ error: 'Not Found' });
       }
 
       // 11. onResponse (always fires after response)
@@ -460,7 +461,7 @@ export class Axon {
     }
 
     if (!ctx.sent) {
-      const statusCode = err?.statusCode ?? 500;
+      const statusCode = err?.statusCode ?? HTTP.INTERNAL_SERVER_ERROR;
       const message = err?.message ?? 'Internal Server Error';
       ctx.status(statusCode).send({ error: message });
     }

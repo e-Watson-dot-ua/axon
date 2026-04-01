@@ -7,6 +7,7 @@ import { runHooks } from './lifecycle/pipeline.js';
 import { parseBody } from './parsers/body.parser.js';
 import { Validator } from './validation/validator.js';
 import { createStaticHandler } from './static/static.handler.js';
+import { Logger } from './utils/logger.js';
 
 export class Axon {
   /** @type {http.Server | null} */
@@ -18,6 +19,11 @@ export class Axon {
   /** @type {{ limit?: number }} */
   #bodyOpts = {};
   #validator = new Validator();
+  /** @type {Map<string, any>} */
+  #settings = new Map();
+  /** @type {Set<import('node:http').ServerResponse>} */
+  #activeResponses = new Set();
+  #defaultLogger = new Logger({ level: 'info' });
 
   /**
    * Register a GET route.
@@ -80,6 +86,26 @@ export class Axon {
     const middleware = handlers.slice(0, -1);
     this.#router.addAll(path, { handler, middleware });
     return this;
+  }
+
+  /**
+   * Set a configuration value.
+   * @param {string} key
+   * @param {any} value
+   * @returns {this}
+   */
+  set(key, value) {
+    this.#settings.set(key, value);
+    return this;
+  }
+
+  /**
+   * Get a configuration value.
+   * @param {string} key
+   * @returns {any}
+   */
+  setting(key) {
+    return this.#settings.get(key);
   }
 
   /**
@@ -195,10 +221,32 @@ export class Axon {
    * @returns {Promise<import('./types.js').ListenResult>}
    */
   listen(opts = {}) {
-    const { port = 0, host = '0.0.0.0' } = opts;
+    const {
+      port = 0,
+      host = '0.0.0.0',
+      signal,
+      keepAliveTimeout = 72_000,
+      headersTimeout = 60_000,
+      requestTimeout = 30_000,
+    } = opts;
+
+    this.#settings.set('requestTimeout', requestTimeout);
 
     const server = http.createServer((req, res) => this.#handleRequest(req, res));
     this.#server = server;
+
+    // Keep-alive tuning
+    server.keepAliveTimeout = keepAliveTimeout;
+    server.headersTimeout = headersTimeout;
+
+    // AbortSignal support for programmatic shutdown
+    if (signal) {
+      if (signal.aborted) {
+        this.close();
+      } else {
+        signal.addEventListener('abort', () => this.close(), { once: true });
+      }
+    }
 
     return new Promise((resolve, reject) => {
       server.once('error', reject);
@@ -214,15 +262,43 @@ export class Axon {
 
   /**
    * Gracefully close the server.
+   * Stops accepting new connections, waits for in-flight requests to drain,
+   * then force-closes after the shutdown timeout.
+   *
+   * @param {Object} [opts]
+   * @param {number} [opts.timeout] ms to wait before force-closing (default 30000)
    * @returns {Promise<void>}
    */
-  close() {
+  close(opts = {}) {
+    const timeout = opts.timeout ?? 30_000;
+
     return new Promise((resolve, reject) => {
       if (!this.#server) {
         resolve();
         return;
       }
-      this.#server.close((err) => (err ? reject(err) : resolve()));
+
+      const server = this.#server;
+      this.#server = null;
+
+      // Stop accepting new connections
+      server.close((err) => {
+        clearTimeout(timer);
+        if (err) reject(err);
+        else resolve();
+      });
+
+      // Force-close after timeout
+      const timer = setTimeout(() => {
+        // Destroy all active connections
+        for (const res of this.#activeResponses) {
+          res.destroy();
+        }
+        this.#activeResponses.clear();
+      }, timeout);
+
+      // Don't keep the process alive just for the timer
+      if (timer.unref) timer.unref();
     });
   }
 
@@ -255,7 +331,32 @@ export class Axon {
    * @param {http.ServerResponse} res
    */
   async #handleRequest(req, res) {
-    const ctx = new Ctx(req, res);
+    // Track active responses for graceful shutdown
+    this.#activeResponses.add(res);
+    res.on('close', () => this.#activeResponses.delete(res));
+
+    // Request timeout
+    const timeout = this.#settings.get('requestTimeout') ?? 30_000;
+    let timer = null;
+    if (timeout > 0) {
+      timer = setTimeout(() => {
+        if (!res.writableEnded) {
+          const ctx = new Ctx(req, res);
+          ctx.status(408).send({ error: 'Request Timeout' });
+        }
+      }, timeout);
+      if (timer.unref) timer.unref();
+    }
+
+    const trustProxy = this.#settings.get('trustProxy') ?? false;
+    const ctx = new Ctx(req, res, { trustProxy });
+
+    // Set request ID header
+    ctx.header('X-Request-Id', ctx.id);
+
+    // Attach request-scoped logger
+    const appLogger = this.#settings.get('logger') ?? this.#defaultLogger;
+    ctx.log = appLogger.child({ reqId: ctx.id });
 
     try {
       // 1. onRequest
@@ -321,6 +422,8 @@ export class Axon {
       await runHooks(this.#hooks.get('onResponse'), ctx);
     } catch (/** @type {any} */ err) {
       await this.#handleError(err, ctx);
+    } finally {
+      if (timer) clearTimeout(timer);
     }
   }
 

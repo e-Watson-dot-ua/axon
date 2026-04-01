@@ -74,6 +74,7 @@
  * @property {AbortSignal} [signal]
  * @property {number} [keepAliveTimeout=72000]
  * @property {number} [headersTimeout=60000]
+ * @property {number} [requestTimeout=30000]
  */
 
 /**

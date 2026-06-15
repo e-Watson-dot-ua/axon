@@ -53,4 +53,18 @@ export class Router {
     if (!trie) return null;
     return trie.lookup(path);
   }
+
+  /**
+   * List the HTTP methods that have a route matching `path`.
+   * Used to build the `Allow` header for 405 / OPTIONS responses.
+   * @param {string} path
+   * @returns {string[]}
+   */
+  allowedMethods(path) {
+    const methods = [];
+    for (const [method, trie] of this.#tries) {
+      if (trie.lookup(path)) methods.push(method);
+    }
+    return methods;
+  }
 }

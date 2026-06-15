@@ -15,6 +15,13 @@ export function collectBody(req, opts = {}) {
   const limit = opts.limit ?? DEFAULT_LIMIT;
 
   return new Promise((resolve, reject) => {
+    // Reject early when the client declares an oversized body, before reading.
+    const declared = Number(req.headers?.['content-length']);
+    if (Number.isFinite(declared) && declared > limit) {
+      reject(new HttpError(HTTP.PAYLOAD_TOO_LARGE, 'Payload Too Large'));
+      return;
+    }
+
     const chunks = [];
     let size = 0;
 

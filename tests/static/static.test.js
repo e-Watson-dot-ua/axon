@@ -117,4 +117,59 @@ describe('app.static()', () => {
     });
     assert.equal(second.status, HTTP.NOT_MODIFIED);
   });
+
+  it('should honor If-None-Match with a weak validator and a list', async () => {
+    app = createApp();
+    app.static('/public', tmpDir);
+    const { port } = await app.listen({ port: 0 });
+
+    const first = await fetch(`http://127.0.0.1:${port}/public/hello.txt`);
+    const etag = first.headers.get('etag');
+
+    const res = await fetch(`http://127.0.0.1:${port}/public/hello.txt`, {
+      headers: { 'If-None-Match': `"other", W/${etag}` },
+    });
+    assert.equal(res.status, HTTP.NOT_MODIFIED);
+  });
+
+  it('should advertise Accept-Ranges and serve a byte range as 206', async () => {
+    app = createApp();
+    app.static('/public', tmpDir);
+    const { port } = await app.listen({ port: 0 });
+
+    const full = await fetch(`http://127.0.0.1:${port}/public/hello.txt`);
+    assert.equal(full.headers.get('accept-ranges'), 'bytes');
+
+    const res = await fetch(`http://127.0.0.1:${port}/public/hello.txt`, {
+      headers: { Range: 'bytes=0-4' },
+    });
+    assert.equal(res.status, HTTP.PARTIAL_CONTENT);
+    assert.equal(res.headers.get('content-range'), 'bytes 0-4/12');
+    assert.equal(res.headers.get('content-length'), '5');
+    assert.equal(await res.text(), 'Hello');
+  });
+
+  it('should serve a suffix range', async () => {
+    app = createApp();
+    app.static('/public', tmpDir);
+    const { port } = await app.listen({ port: 0 });
+
+    const res = await fetch(`http://127.0.0.1:${port}/public/hello.txt`, {
+      headers: { Range: 'bytes=-6' },
+    });
+    assert.equal(res.status, HTTP.PARTIAL_CONTENT);
+    assert.equal(await res.text(), 'Static');
+  });
+
+  it('should return 416 for an unsatisfiable range', async () => {
+    app = createApp();
+    app.static('/public', tmpDir);
+    const { port } = await app.listen({ port: 0 });
+
+    const res = await fetch(`http://127.0.0.1:${port}/public/hello.txt`, {
+      headers: { Range: 'bytes=999-1000' },
+    });
+    assert.equal(res.status, HTTP.RANGE_NOT_SATISFIABLE);
+    assert.equal(res.headers.get('content-range'), 'bytes */12');
+  });
 });

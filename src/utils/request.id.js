@@ -8,9 +8,15 @@ import crypto from 'node:crypto';
  * @param {import('node:http').IncomingMessage} req
  * @returns {string}
  */
+/**
+ * Safe character set / length for a reused request ID. Rejecting anything else
+ * prevents log/header injection and unbounded values from an untrusted client.
+ */
+const SAFE_ID_RE = /^[A-Za-z0-9._-]{1,128}$/;
+
 export function getRequestId(req) {
   const existing = req.headers['x-request-id'];
-  if (typeof existing === 'string' && existing.length > 0) {
+  if (typeof existing === 'string' && SAFE_ID_RE.test(existing)) {
     return existing;
   }
   return crypto.randomUUID();

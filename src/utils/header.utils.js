@@ -4,6 +4,9 @@
  * @returns {{ type: string, params: Object<string, string> }}
  */
 export function parseContentType(header) {
+  if (typeof header !== 'string') {
+    return { type: '', params: Object.create(null) };
+  }
   const parts = header.split(';').map((s) => s.trim());
   const type = parts[0] ?? '';
   /** @type {Object<string, string>} */
@@ -35,10 +38,39 @@ export function parseCookies(header) {
     const eq = pair.indexOf('=');
     if (eq > 0) {
       const key = pair.slice(0, eq).trim();
-      const val = decodeURIComponent(pair.slice(eq + 1).trim());
+      const raw = pair.slice(eq + 1).trim();
+      // Malformed percent-encoding must not crash the whole request.
+      let val;
+      try {
+        val = decodeURIComponent(raw);
+      } catch {
+        val = raw;
+      }
       cookies[key] = val;
     }
   }
 
   return cookies;
+}
+
+/**
+ * Append a field to the response `Vary` header without clobbering existing
+ * values (correctness for shared caches).
+ * @param {import('node:http').ServerResponse} res
+ * @param {string} field
+ */
+export function appendVary(res, field) {
+  const existing = res.getHeader('Vary');
+  if (!existing) {
+    res.setHeader('Vary', field);
+    return;
+  }
+  if (existing === '*') return;
+  const list = String(existing)
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (list.some((v) => v.toLowerCase() === field.toLowerCase())) return;
+  list.push(field);
+  res.setHeader('Vary', list.join(', '));
 }

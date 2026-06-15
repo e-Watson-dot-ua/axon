@@ -9,8 +9,12 @@ export { cors } from './plugins/cors.js';
 export { compression } from './plugins/compression.js';
 export { rateLimit } from './plugins/rate.limit.js';
 
+// Built-in middleware
+export { accessLog } from './middleware/access.log.js';
+
 // HTTP status constants
 export { HTTP } from './utils/http.status.js';
 
-// Cluster
+// Cluster + process lifecycle
 export { launch } from './cluster/cluster.launcher.js';
+export { installProcessGuards } from './utils/process.guards.js';

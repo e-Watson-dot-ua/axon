@@ -6,6 +6,26 @@
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
+ * Cache compiled `pattern` regexes so they aren't rebuilt on every request.
+ * Keyed by the pattern source string.
+ * @type {Map<string, RegExp>}
+ */
+const PATTERN_CACHE = new Map();
+
+/**
+ * @param {string} pattern
+ * @returns {RegExp}
+ */
+function compilePattern(pattern) {
+  let re = PATTERN_CACHE.get(pattern);
+  if (!re) {
+    re = new RegExp(pattern);
+    PATTERN_CACHE.set(pattern, re);
+  }
+  return re;
+}
+
+/**
  * Validate a value against a schema definition.
  *
  * @param {any} value
@@ -27,14 +47,14 @@ export function validateSchema(value, schema, path = '') {
   if (schema.type === 'object' && schema.properties && typeof value === 'object' && value !== null) {
     if (schema.required) {
       for (const key of schema.required) {
-        if (!(key in value)) {
+        if (!Object.prototype.hasOwnProperty.call(value, key)) {
           errors.push(`${path ? path + '.' : ''}${key} is required`);
         }
       }
     }
 
     for (const [key, propSchema] of Object.entries(schema.properties)) {
-      if (key in value) {
+      if (Object.prototype.hasOwnProperty.call(value, key)) {
         const nested = validateSchema(value[key], propSchema, path ? `${path}.${key}` : key);
         errors.push(...nested.errors);
       }
@@ -48,7 +68,7 @@ export function validateSchema(value, schema, path = '') {
     if (schema.maxLength !== undefined && value.length > schema.maxLength) {
       errors.push(`${path || 'value'} must have at most ${schema.maxLength} characters`);
     }
-    if (schema.pattern !== undefined && !new RegExp(schema.pattern).test(value)) {
+    if (schema.pattern !== undefined && !compilePattern(schema.pattern).test(value)) {
       errors.push(`${path || 'value'} must match pattern ${schema.pattern}`);
     }
     if (schema.format === 'email' && !EMAIL_RE.test(value)) {

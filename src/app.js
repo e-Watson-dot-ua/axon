@@ -343,6 +343,21 @@ export class Axon {
   }
 
   /**
+   * Build an `Allow` header value for a path, or '' if no route exists.
+   * Adds HEAD (implied by GET) and OPTIONS (auto-handled).
+   * @param {string} path
+   * @returns {string}
+   */
+  #allowHeader(path) {
+    const allowed = this.#router.allowedMethods(path);
+    if (allowed.length === 0) return '';
+    const set = new Set(allowed);
+    if (set.has('GET')) set.add('HEAD');
+    set.add('OPTIONS');
+    return [...set].join(', ');
+  }
+
+  /**
    * Handle an incoming request.
    * @param {http.IncomingMessage} req
    * @param {http.ServerResponse} res
@@ -352,21 +367,21 @@ export class Axon {
     this.#activeResponses.add(res);
     res.on('close', () => this.#activeResponses.delete(res));
 
-    // Request timeout
+    const trustProxy = this.#settings.get('trustProxy') ?? false;
+    const ctx = new Ctx(req, res, { trustProxy });
+
+    // Request timeout — reuse the real ctx so its `sent` guard prevents a
+    // double-send race with a handler that responds just after the timer fires.
     const timeout = this.#settings.get('requestTimeout') ?? 30_000;
     let timer = null;
     if (timeout > 0) {
       timer = setTimeout(() => {
-        if (!res.writableEnded) {
-          const ctx = new Ctx(req, res);
+        if (!ctx.sent && !res.writableEnded) {
           ctx.status(HTTP.REQUEST_TIMEOUT).send({ error: 'Request Timeout' });
         }
       }, timeout);
       if (timer.unref) timer.unref();
     }
-
-    const trustProxy = this.#settings.get('trustProxy') ?? false;
-    const ctx = new Ctx(req, res, { trustProxy });
 
     // Set request ID header
     ctx.header('X-Request-Id', ctx.id);
@@ -390,17 +405,36 @@ export class Axon {
 
         // 4. parse phase — body parsing
         if (ctx.method !== 'GET' && ctx.method !== 'HEAD') {
-          ctx.body = await parseBody(ctx.req, this.#bodyOpts);
+          const limit = this.#settings.get('bodyLimit') ?? this.#bodyOpts.limit;
+          ctx.body = await parseBody(ctx.req, { limit });
         }
 
         // 5. preValidation
         await runHooks(this.#hooks.get('preValidation'), ctx);
         if (ctx.sent) return;
 
-        const match = this.#router.find(ctx.method ?? 'GET', ctx.path);
+        const method = ctx.method ?? 'GET';
+        let match = this.#router.find(method, ctx.path);
+
+        // HEAD falls back to the GET handler — Node strips the response body.
+        if (!match && method === 'HEAD') {
+          match = this.#router.find('GET', ctx.path);
+        }
 
         if (!match) {
-          ctx.status(HTTP.NOT_FOUND).send({ error: 'Not Found' });
+          const allowed = this.#allowHeader(ctx.path);
+
+          // Path exists for other methods → 405 (or auto-answer OPTIONS).
+          if (allowed) {
+            ctx.header('Allow', allowed);
+            if (method === 'OPTIONS') {
+              ctx.status(HTTP.NO_CONTENT).send('');
+            } else {
+              ctx.status(HTTP.METHOD_NOT_ALLOWED).send({ error: 'Method Not Allowed' });
+            }
+          } else {
+            ctx.status(HTTP.NOT_FOUND).send({ error: 'Not Found' });
+          }
           return;
         }
 
@@ -454,12 +488,14 @@ export class Axon {
     if (errorHooks.length > 0) {
       try {
         await runHooks(errorHooks, err, ctx);
-        return;
-      } catch {
-        // If error hooks themselves throw, fall through to default
+      } catch (hookErr) {
+        // Surface the hook's own failure to the default handler below.
+        err = hookErr;
       }
     }
 
+    // Always ensure a response is sent. If the error hooks already responded,
+    // `ctx.sent` is true and this is a no-op; otherwise the client would hang.
     if (!ctx.sent) {
       const statusCode = err?.statusCode ?? HTTP.INTERNAL_SERVER_ERROR;
       const message = err?.message ?? 'Internal Server Error';

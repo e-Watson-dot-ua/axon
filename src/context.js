@@ -21,6 +21,8 @@ export class Ctx {
 
   /** @type {URL | null} */
   #url = null;
+  /** @type {Object<string, string> | null} */
+  #query = null;
   #sent = false;
   /** @type {string | null} */
   #id = null;
@@ -143,13 +145,17 @@ export class Ctx {
     return this.url.pathname;
   }
 
-  /** Query parameters as a plain object. */
+  /** Query parameters as a plain object (lazy, memoized). */
   get query() {
-    const obj = Object.create(null);
-    for (const [key, value] of this.url.searchParams) {
-      obj[key] = value;
+    if (!this.#query) {
+      const obj = Object.create(null);
+      for (const [key, value] of this.url.searchParams) {
+        if (key === '__proto__' || key === 'constructor' || key === 'prototype') continue;
+        obj[key] = value;
+      }
+      this.#query = obj;
     }
-    return obj;
+    return this.#query;
   }
 
   /** Request headers (lower-cased keys). */

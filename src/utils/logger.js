@@ -11,11 +11,20 @@ export class Logger {
   #level;
   /** @type {Object<string, any>} */
   #base;
+  /** @type {boolean} */
+  #json;
 
-  /** @param {Object} [opts] */
+  /**
+   * @param {Object} [opts]
+   * @param {string} [opts.level] minimum level (default: 'info')
+   * @param {Object<string, any>} [opts.base] fields included on every line
+   * @param {boolean} [opts.json] emit newline-delimited JSON (default: auto —
+   *   JSON when stdout is not a TTY, pretty text when it is)
+   */
   constructor(opts = {}) {
     this.#level = LEVELS[opts.level ?? 'info'] ?? 30;
     this.#base = opts.base ?? {};
+    this.#json = opts.json ?? !process.stdout.isTTY;
   }
 
   /**
@@ -26,6 +35,7 @@ export class Logger {
     const child = new Logger();
     child.#level = this.#level;
     child.#base = { ...this.#base, ...fields };
+    child.#json = this.#json;
     return child;
   }
 
@@ -69,12 +79,23 @@ export class Logger {
     if (numLevel < this.#level) return;
 
     const fields = { ...this.#base, ...extra };
-    const keys = Object.keys(fields);
-    const suffix = keys.length > 0
-      ? ' ' + keys.map((k) => `${k}=${JSON.stringify(fields[k])}`).join(' ')
-      : '';
 
-    const line = `[${level.toUpperCase()}] ${msg}${suffix}\n`;
+    let line;
+    if (this.#json) {
+      // Structured output for log pipelines. JSON.stringify escapes control
+      // characters, so no separate sanitization is needed.
+      line = JSON.stringify({ level, msg: String(msg), ...fields }) + '\n';
+    } else {
+      const keys = Object.keys(fields);
+      const suffix = keys.length > 0
+        ? ' ' + keys.map((k) => `${k}=${JSON.stringify(fields[k])}`).join(' ')
+        : '';
+      // Strip CR/LF from the message so a caller-supplied value (path, header,
+      // error text) cannot forge extra log lines.
+      const safeMsg = typeof msg === 'string' ? msg.replace(/[\r\n]+/g, ' ') : String(msg);
+      line = `[${level.toUpperCase()}] ${safeMsg}${suffix}\n`;
+    }
+
     if (numLevel >= LEVELS.error) {
       process.stderr.write(line);
     } else {

@@ -8,17 +8,25 @@ const DEFAULT_LIMIT = 1024 * 1024; // 1 MiB
  *
  * @param {import('node:http').IncomingMessage} req
  * @param {Object} [opts]
- * @param {number} [opts.limit] — max bytes (default 1 MiB)
+ * @param {number} [opts.limit] - max bytes (default 1 MiB)
  * @returns {Promise<Buffer>}
  */
 export function collectBody(req, opts = {}) {
   const limit = opts.limit ?? DEFAULT_LIMIT;
 
   return new Promise((resolve, reject) => {
+    // Reject early when the client declares an oversized body, before reading.
+    const declared = Number(req.headers?.['content-length']);
+    if (Number.isFinite(declared) && declared > limit) {
+      reject(new HttpError(HTTP.PAYLOAD_TOO_LARGE, 'Payload Too Large'));
+      return;
+    }
+
+    /** @type {Buffer[]} */
     const chunks = [];
     let size = 0;
 
-    req.on('data', (chunk) => {
+    req.on('data', (/** @type {Buffer} */ chunk) => {
       size += chunk.length;
       if (size > limit) {
         req.destroy();

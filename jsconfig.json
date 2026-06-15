@@ -2,15 +2,13 @@
   "compilerOptions": {
     "checkJs": true,
     "strict": true,
-    "module": "ESNext",
-    "moduleResolution": "node",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "target": "ESNext",
     "resolveJsonModule": true,
-    "noEmit": true,
-    "baseUrl": ".",
-    "paths": {
-      "#src/*": ["./src/*"]
-    }
+    "skipLibCheck": true,
+    "maxNodeModuleJsDepth": 0,
+    "noEmit": true
   },
   "include": ["src/**/*.js"],
   "exclude": ["node_modules"]

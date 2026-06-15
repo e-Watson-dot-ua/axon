@@ -7,6 +7,7 @@ export const HTTP = Object.freeze({
   OK: 200,
   CREATED: 201,
   NO_CONTENT: 204,
+  PARTIAL_CONTENT: 206,
 
   // 3xx Redirection
   MOVED_PERMANENTLY: 301,
@@ -24,6 +25,7 @@ export const HTTP = Object.freeze({
   GONE: 410,
   PAYLOAD_TOO_LARGE: 413,
   UNSUPPORTED_MEDIA_TYPE: 415,
+  RANGE_NOT_SATISFIABLE: 416,
   UNPROCESSABLE_ENTITY: 422,
   TOO_MANY_REQUESTS: 429,
 

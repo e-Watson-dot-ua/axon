@@ -131,9 +131,6 @@ describe('Validator (strategy)', () => {
   it('should skip parts not in schema', () => {
     const v = new Validator();
     // No error — query has no schema
-    v.validate(
-      { body: 'hello', query: { anything: true } },
-      { body: { type: 'string' } },
-    );
+    v.validate({ body: 'hello', query: { anything: true } }, { body: { type: 'string' } });
   });
 });

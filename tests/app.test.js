@@ -89,13 +89,14 @@ describe('Axon — routing', () => {
     assert.equal(body.id, '42');
   });
 
-  it('should return 404 for wrong method', async () => {
+  it('should return 405 with an Allow header for a wrong method', async () => {
     app = createApp();
     app.get('/only-get', (ctx) => ctx.send('ok'));
     const { port } = await app.listen({ port: 0 });
 
     const res = await fetch(`http://127.0.0.1:${port}/only-get`, { method: 'DELETE' });
-    assert.equal(res.status, HTTP.NOT_FOUND);
+    assert.equal(res.status, HTTP.METHOD_NOT_ALLOWED);
+    assert.ok(res.headers.get('allow')?.includes('GET'));
   });
 
   it('should support app.all() for any method', async () => {
@@ -142,9 +143,7 @@ describe('Axon — routing', () => {
 
   it('should support method chaining', () => {
     app = createApp();
-    const ret = app
-      .get('/a', (ctx) => ctx.send('a'))
-      .post('/b', (ctx) => ctx.send('b'));
+    const ret = app.get('/a', (ctx) => ctx.send('a')).post('/b', (ctx) => ctx.send('b'));
 
     assert.equal(ret, app);
   });
@@ -499,7 +498,9 @@ describe('Axon — validation', () => {
           properties: { name: { type: 'string', minLength: 1 } },
         },
       },
-      handler(ctx) { ctx.send({ ok: true }); },
+      handler(ctx) {
+        ctx.send({ ok: true });
+      },
     });
     const { port } = await app.listen({ port: 0 });
 
@@ -523,7 +524,9 @@ describe('Axon — validation', () => {
           properties: { name: { type: 'string', minLength: 1 } },
         },
       },
-      handler(ctx) { ctx.send({ ok: true }); },
+      handler(ctx) {
+        ctx.send({ ok: true });
+      },
     });
     const { port } = await app.listen({ port: 0 });
 
@@ -540,7 +543,9 @@ describe('Axon — validation', () => {
     app.setValidator(() => ({ valid: false, errors: ['custom error'] }));
     app.post('/test', {
       schema: { body: { type: 'object' } },
-      handler(ctx) { ctx.send('ok'); },
+      handler(ctx) {
+        ctx.send('ok');
+      },
     });
     const { port } = await app.listen({ port: 0 });
 

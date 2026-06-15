@@ -2,7 +2,7 @@
  * Shared type definitions for Axon.
  *
  * This file contains JSDoc typedefs used across the codebase.
- * It is not imported at runtime — only referenced via @typedef comments.
+ * It is not imported at runtime - only referenced from type annotations.
  */
 
 /**
@@ -84,8 +84,9 @@
  */
 
 /**
- * Placeholder — replaced by actual Ctx class once implemented.
- * @typedef {Object} Ctx
+ * The per-request context. Aliases the concrete class in `context.js` so that
+ * `ctx` parameters typed via these callbacks get full member typing.
+ * @typedef {import('./context.js').Ctx} Ctx
  */
 
 export {};

@@ -48,7 +48,10 @@ describe('Graceful shutdown', () => {
 describe('Request timeout', () => {
   /** @type {import('../src/app.js').Axon | null} */
   let app = null;
-  afterEach(async () => { if (app) await app.close(); app = null; });
+  afterEach(async () => {
+    if (app) await app.close();
+    app = null;
+  });
 
   it('should return 408 when handler exceeds timeout', async () => {
     app = createApp();
@@ -77,7 +80,10 @@ describe('Request timeout', () => {
 describe('Request ID', () => {
   /** @type {import('../src/app.js').Axon | null} */
   let app = null;
-  afterEach(async () => { if (app) await app.close(); app = null; });
+  afterEach(async () => {
+    if (app) await app.close();
+    app = null;
+  });
 
   it('should generate X-Request-Id header', async () => {
     app = createApp();
@@ -112,7 +118,10 @@ describe('Request ID', () => {
 describe('Proxy trust', () => {
   /** @type {import('../src/app.js').Axon | null} */
   let app = null;
-  afterEach(async () => { if (app) await app.close(); app = null; });
+  afterEach(async () => {
+    if (app) await app.close();
+    app = null;
+  });
 
   it('should use socket IP when trustProxy is off', async () => {
     app = createApp();
@@ -130,11 +139,13 @@ describe('Proxy trust', () => {
   it('should use forwarded headers when trustProxy is on', async () => {
     app = createApp();
     app.set('trustProxy', true);
-    app.get('/ip', (ctx) => ctx.send({
-      ip: ctx.ip,
-      proto: ctx.protocol,
-      host: ctx.hostname,
-    }));
+    app.get('/ip', (ctx) =>
+      ctx.send({
+        ip: ctx.ip,
+        proto: ctx.protocol,
+        host: ctx.hostname,
+      }),
+    );
     const { port } = await app.listen({ port: 0 });
 
     const res = await fetch(`http://127.0.0.1:${port}/ip`, {
@@ -156,7 +167,10 @@ describe('Proxy trust', () => {
 describe('Security headers plugin', () => {
   /** @type {import('../src/app.js').Axon | null} */
   let app = null;
-  afterEach(async () => { if (app) await app.close(); app = null; });
+  afterEach(async () => {
+    if (app) await app.close();
+    app = null;
+  });
 
   it('should set default security headers', async () => {
     app = createApp();
@@ -190,7 +204,10 @@ describe('Security headers plugin', () => {
 describe('CORS plugin', () => {
   /** @type {import('../src/app.js').Axon | null} */
   let app = null;
-  afterEach(async () => { if (app) await app.close(); app = null; });
+  afterEach(async () => {
+    if (app) await app.close();
+    app = null;
+  });
 
   it('should set Access-Control-Allow-Origin on simple requests', async () => {
     app = createApp();
@@ -199,7 +216,7 @@ describe('CORS plugin', () => {
     const { port } = await app.listen({ port: 0 });
 
     const res = await fetch(`http://127.0.0.1:${port}/test`, {
-      headers: { 'Origin': 'http://example.com' },
+      headers: { Origin: 'http://example.com' },
     });
     assert.equal(res.headers.get('access-control-allow-origin'), '*');
   });
@@ -213,7 +230,7 @@ describe('CORS plugin', () => {
     const res = await fetch(`http://127.0.0.1:${port}/api`, {
       method: 'OPTIONS',
       headers: {
-        'Origin': 'http://example.com',
+        Origin: 'http://example.com',
         'Access-Control-Request-Method': 'POST',
         'Access-Control-Request-Headers': 'Content-Type',
       },
@@ -231,7 +248,7 @@ describe('CORS plugin', () => {
     const { port } = await app.listen({ port: 0 });
 
     const res = await fetch(`http://127.0.0.1:${port}/test`, {
-      headers: { 'Origin': 'http://example.com' },
+      headers: { Origin: 'http://example.com' },
     });
     assert.equal(res.headers.get('access-control-allow-credentials'), 'true');
   });
@@ -242,7 +259,10 @@ describe('CORS plugin', () => {
 describe('Cookie support', () => {
   /** @type {import('../src/app.js').Axon | null} */
   let app = null;
-  afterEach(async () => { if (app) await app.close(); app = null; });
+  afterEach(async () => {
+    if (app) await app.close();
+    app = null;
+  });
 
   it('should parse request cookies', async () => {
     app = createApp();
@@ -252,7 +272,7 @@ describe('Cookie support', () => {
     const { port } = await app.listen({ port: 0 });
 
     const res = await fetch(`http://127.0.0.1:${port}/test`, {
-      headers: { 'Cookie': 'session=abc123; theme=dark' },
+      headers: { Cookie: 'session=abc123; theme=dark' },
     });
     const body = await res.json();
     assert.equal(body.session, 'abc123');
@@ -337,7 +357,10 @@ describe('Logger', () => {
 describe('Rate limiting plugin', () => {
   /** @type {import('../src/app.js').Axon | null} */
   let app = null;
-  afterEach(async () => { if (app) await app.close(); app = null; });
+  afterEach(async () => {
+    if (app) await app.close();
+    app = null;
+  });
 
   it('should allow requests within limit', async () => {
     app = createApp();

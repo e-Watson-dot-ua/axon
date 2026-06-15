@@ -23,16 +23,28 @@ function createMock(opts = {}) {
   let _statusCode = HTTP.OK;
 
   const res = {
-    get statusCode() { return _statusCode; },
-    set statusCode(v) { _statusCode = v; },
-    setHeader(k, v) { _headers[k.toLowerCase()] = v; },
-    getHeader(k) { return _headers[k.toLowerCase()]; },
-    hasHeader(k) { return k.toLowerCase() in _headers; },
+    get statusCode() {
+      return _statusCode;
+    },
+    set statusCode(v) {
+      _statusCode = v;
+    },
+    setHeader(k, v) {
+      _headers[k.toLowerCase()] = v;
+    },
+    getHeader(k) {
+      return _headers[k.toLowerCase()];
+    },
+    hasHeader(k) {
+      return k.toLowerCase() in _headers;
+    },
     end(chunk) {
       if (chunk) _body += chunk.toString();
       _ended = true;
     },
-    get _internal() { return { headers: _headers, ended: _ended, body: _body }; },
+    get _internal() {
+      return { headers: _headers, ended: _ended, body: _body };
+    },
   };
 
   return { req, res };

@@ -3,7 +3,7 @@ import { RadixTrie } from './radix.trie.js';
 const HTTP_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'];
 
 /**
- * Router facade — one trie per HTTP method.
+ * Router facade - one trie per HTTP method.
  */
 export class Router {
   /** @type {Map<string, RadixTrie>} */
@@ -17,7 +17,7 @@ export class Router {
 
   /**
    * Register a route.
-   * @param {string} method — HTTP method (uppercase)
+   * @param {string} method - HTTP method (uppercase)
    * @param {string} path
    * @param {any} data
    */
@@ -52,5 +52,19 @@ export class Router {
     const trie = this.#tries.get(method.toUpperCase());
     if (!trie) return null;
     return trie.lookup(path);
+  }
+
+  /**
+   * List the HTTP methods that have a route matching `path`.
+   * Used to build the `Allow` header for 405 / OPTIONS responses.
+   * @param {string} path
+   * @returns {string[]}
+   */
+  allowedMethods(path) {
+    const methods = [];
+    for (const [method, trie] of this.#tries) {
+      if (trie.lookup(path)) methods.push(method);
+    }
+    return methods;
   }
 }

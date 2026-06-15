@@ -3,7 +3,7 @@
  * Stops on the first error (throws it).
  *
  * @param {Function[]} hooks
- * @param  {...any} args — arguments passed to each hook
+ * @param  {...any} args - arguments passed to each hook
  * @returns {Promise<void>}
  */
 export async function runHooks(hooks, ...args) {

@@ -1,4 +1,5 @@
 import { HTTP } from '../utils/http.status.js';
+import { appendVary } from '../utils/header.utils.js';
 
 /**
  * CORS plugin.
@@ -14,6 +15,15 @@ import { HTTP } from '../utils/http.status.js';
  */
 export function cors(app, opts = {}) {
   const origin = opts.origin ?? '*';
+
+  // A wildcard origin with credentials is rejected by browsers and leaks the
+  // ACAO to every site - fail fast at registration instead of at runtime.
+  if (opts.credentials && origin === '*') {
+    throw new Error(
+      "cors: `credentials: true` cannot be combined with `origin: '*'`. " +
+        'Specify an explicit origin, an array, or a function.',
+    );
+  }
   const methods = Array.isArray(opts.methods)
     ? opts.methods.join(',')
     : (opts.methods ?? 'GET,HEAD,PUT,PATCH,POST,DELETE');
@@ -47,6 +57,12 @@ export function cors(app, opts = {}) {
     if (!resolved) return;
 
     ctx.header('Access-Control-Allow-Origin', resolved);
+
+    // When the allowed origin is reflected (not a literal '*'), the response
+    // depends on the request Origin - shared caches must key on it.
+    if (resolved !== '*') {
+      appendVary(ctx.res, 'Origin');
+    }
 
     if (opts.credentials) {
       ctx.header('Access-Control-Allow-Credentials', 'true');

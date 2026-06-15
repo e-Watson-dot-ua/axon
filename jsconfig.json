@@ -2,8 +2,8 @@
   "compilerOptions": {
     "checkJs": true,
     "strict": true,
-    "module": "ESNext",
-    "moduleResolution": "node",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "target": "ESNext",
     "resolveJsonModule": true,
     "noEmit": true,

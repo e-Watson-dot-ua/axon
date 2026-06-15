@@ -15,7 +15,7 @@ describe('Prototype pollution defenses', () => {
     const obj = parseJson(Buffer.from('{"__proto__":{"polluted":true},"a":1}'));
     assert.equal(obj.a, 1);
     assert.equal(Object.getPrototypeOf(obj).polluted, undefined);
-    assert.equal(({}).polluted, undefined);
+    assert.equal({}.polluted, undefined);
   });
 
   it('parseUrlencoded skips __proto__ keys', () => {
@@ -70,7 +70,9 @@ describe('Request ID validation', () => {
   it('rejects an injection / oversized X-Request-Id and generates a fresh one', () => {
     const evil = getRequestId(/** @type {any} */ ({ headers: { 'x-request-id': 'a\r\nb' } }));
     assert.notEqual(evil, 'a\r\nb');
-    const huge = getRequestId(/** @type {any} */ ({ headers: { 'x-request-id': 'a'.repeat(500) } }));
+    const huge = getRequestId(
+      /** @type {any} */ ({ headers: { 'x-request-id': 'a'.repeat(500) } }),
+    );
     assert.notEqual(huge, 'a'.repeat(500));
   });
 });
@@ -111,7 +113,11 @@ describe('Rate limiter pluggable store', () => {
 
 describe('Body size limit', () => {
   it('rejects early on an oversized Content-Length', async () => {
-    const stream = new Readable({ read() { this.push(null); } });
+    const stream = new Readable({
+      read() {
+        this.push(null);
+      },
+    });
     /** @type {any} */ (stream).headers = { 'content-length': '999999' };
     await assert.rejects(
       () => collectBody(/** @type {any} */ (stream), { limit: 100 }),

@@ -44,7 +44,9 @@ describe('app.register (plugins)', () => {
   it('should call plugin function with app and opts', () => {
     app = createApp();
     let receivedOpts = null;
-    const plugin = (_app, opts) => { receivedOpts = opts; };
+    const plugin = (_app, opts) => {
+      receivedOpts = opts;
+    };
     app.register(plugin, { key: 'value' });
     assert.deepEqual(receivedOpts, { key: 'value' });
   });
@@ -54,7 +56,9 @@ describe('app.register (plugins)', () => {
     let hookRan = false;
 
     function myPlugin(app) {
-      app.addHook('onRequest', async () => { hookRan = true; });
+      app.addHook('onRequest', async () => {
+        hookRan = true;
+      });
     }
 
     app.register(myPlugin);
@@ -67,9 +71,7 @@ describe('app.register (plugins)', () => {
 
   it('should support chaining', () => {
     app = createApp();
-    const ret = app
-      .register(() => {})
-      .register(() => {});
+    const ret = app.register(() => {}).register(() => {});
     assert.equal(ret, app);
   });
 });

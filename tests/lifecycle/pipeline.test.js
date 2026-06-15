@@ -5,11 +5,7 @@ import { runHooks } from '../../src/lifecycle/pipeline.js';
 describe('runHooks', () => {
   it('should run hooks sequentially', async () => {
     const order = [];
-    const hooks = [
-      async () => order.push(1),
-      async () => order.push(2),
-      async () => order.push(3),
-    ];
+    const hooks = [async () => order.push(1), async () => order.push(2), async () => order.push(3)];
 
     await runHooks(hooks);
     assert.deepEqual(order, [1, 2, 3]);
@@ -27,7 +23,9 @@ describe('runHooks', () => {
     const order = [];
     const hooks = [
       async () => order.push(1),
-      async () => { throw new Error('fail'); },
+      async () => {
+        throw new Error('fail');
+      },
       async () => order.push(3),
     ];
 

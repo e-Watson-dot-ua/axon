@@ -6,6 +6,8 @@
     "moduleResolution": "NodeNext",
     "target": "ESNext",
     "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "maxNodeModuleJsDepth": 0,
     "noEmit": true
   },
   "include": ["src/**/*.js"],

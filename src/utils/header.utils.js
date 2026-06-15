@@ -16,7 +16,10 @@ export function parseContentType(header) {
     const eq = parts[i].indexOf('=');
     if (eq > 0) {
       const key = parts[i].slice(0, eq).trim().toLowerCase();
-      const val = parts[i].slice(eq + 1).trim().replace(/^"|"$/g, '');
+      const val = parts[i]
+        .slice(eq + 1)
+        .trim()
+        .replace(/^"|"$/g, '');
       params[key] = val;
     }
   }

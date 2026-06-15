@@ -26,7 +26,7 @@ export class RadixTrie {
           node.wildcardName = name;
         }
         node = node.wildcardChild;
-        break; // wildcard consumes the rest — must be last
+        break; // wildcard consumes the rest - must be last
       }
 
       if (seg.startsWith(':')) {
@@ -75,7 +75,7 @@ export class RadixTrie {
    * @returns {{ data: any, params: Object<string, string> } | null}
    */
   #match(node, segments, index, params) {
-    // All segments consumed — check for data on this node
+    // All segments consumed - check for data on this node
     if (index === segments.length) {
       return node.data !== null ? { data: node.data, params } : null;
     }
@@ -108,9 +108,7 @@ export class RadixTrie {
     // 3. Try wildcard child (lowest priority, consumes rest)
     if (node.wildcardChild && node.wildcardName) {
       params[node.wildcardName] = segments.slice(index).join('/');
-      return node.wildcardChild.data !== null
-        ? { data: node.wildcardChild.data, params }
-        : null;
+      return node.wildcardChild.data !== null ? { data: node.wildcardChild.data, params } : null;
     }
 
     return null;

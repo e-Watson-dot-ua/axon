@@ -28,7 +28,9 @@ describe('Error handling — edge cases', () => {
 
   it('should return 500 for unhandled errors without statusCode', async () => {
     app = createApp();
-    app.get('/err', () => { throw new Error('oops'); });
+    app.get('/err', () => {
+      throw new Error('oops');
+    });
     const { port } = await app.listen({ port: 0 });
 
     const res = await fetch(`http://127.0.0.1:${port}/err`);
@@ -39,7 +41,9 @@ describe('Error handling — edge cases', () => {
 
   it('should use HttpError statusCode', async () => {
     app = createApp();
-    app.get('/notfound', () => { throw new HttpError(HTTP.NOT_FOUND, 'Gone'); });
+    app.get('/notfound', () => {
+      throw new HttpError(HTTP.NOT_FOUND, 'Gone');
+    });
     const { port } = await app.listen({ port: 0 });
 
     const res = await fetch(`http://127.0.0.1:${port}/notfound`);
@@ -49,8 +53,12 @@ describe('Error handling — edge cases', () => {
 
   it('should fall back to default handler when onError hook throws', async () => {
     app = createApp();
-    app.onError(() => { throw new Error('hook also fails'); });
-    app.get('/err', () => { throw new HttpError(HTTP.UNPROCESSABLE_ENTITY, 'original'); });
+    app.onError(() => {
+      throw new Error('hook also fails');
+    });
+    app.get('/err', () => {
+      throw new HttpError(HTTP.UNPROCESSABLE_ENTITY, 'original');
+    });
     const { port } = await app.listen({ port: 0 });
 
     const res = await fetch(`http://127.0.0.1:${port}/err`);

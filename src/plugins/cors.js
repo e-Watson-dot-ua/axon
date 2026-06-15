@@ -17,7 +17,7 @@ export function cors(app, opts = {}) {
   const origin = opts.origin ?? '*';
 
   // A wildcard origin with credentials is rejected by browsers and leaks the
-  // ACAO to every site — fail fast at registration instead of at runtime.
+  // ACAO to every site - fail fast at registration instead of at runtime.
   if (opts.credentials && origin === '*') {
     throw new Error(
       "cors: `credentials: true` cannot be combined with `origin: '*'`. " +
@@ -59,7 +59,7 @@ export function cors(app, opts = {}) {
     ctx.header('Access-Control-Allow-Origin', resolved);
 
     // When the allowed origin is reflected (not a literal '*'), the response
-    // depends on the request Origin — shared caches must key on it.
+    // depends on the request Origin - shared caches must key on it.
     if (resolved !== '*') {
       appendVary(ctx.res, 'Origin');
     }

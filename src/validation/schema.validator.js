@@ -44,7 +44,12 @@ export function validateSchema(value, schema, path = '') {
     }
   }
 
-  if (schema.type === 'object' && schema.properties && typeof value === 'object' && value !== null) {
+  if (
+    schema.type === 'object' &&
+    schema.properties &&
+    typeof value === 'object' &&
+    value !== null
+  ) {
     if (schema.required) {
       for (const key of schema.required) {
         if (!Object.prototype.hasOwnProperty.call(value, key)) {
@@ -99,11 +104,17 @@ export function validateSchema(value, schema, path = '') {
  */
 function checkType(value, type) {
   switch (type) {
-    case 'string': return typeof value === 'string';
-    case 'number': return typeof value === 'number' && !Number.isNaN(value);
-    case 'boolean': return typeof value === 'boolean';
-    case 'object': return typeof value === 'object' && value !== null && !Array.isArray(value);
-    case 'array': return Array.isArray(value);
-    default: return true;
+    case 'string':
+      return typeof value === 'string';
+    case 'number':
+      return typeof value === 'number' && !Number.isNaN(value);
+    case 'boolean':
+      return typeof value === 'boolean';
+    case 'object':
+      return typeof value === 'object' && value !== null && !Array.isArray(value);
+    case 'array':
+      return Array.isArray(value);
+    default:
+      return true;
   }
 }

@@ -8,7 +8,7 @@ const DEFAULT_LIMIT = 1024 * 1024; // 1 MiB
  *
  * @param {import('node:http').IncomingMessage} req
  * @param {Object} [opts]
- * @param {number} [opts.limit] — max bytes (default 1 MiB)
+ * @param {number} [opts.limit] - max bytes (default 1 MiB)
  * @returns {Promise<Buffer>}
  */
 export function collectBody(req, opts = {}) {
@@ -22,10 +22,11 @@ export function collectBody(req, opts = {}) {
       return;
     }
 
+    /** @type {Buffer[]} */
     const chunks = [];
     let size = 0;
 
-    req.on('data', (chunk) => {
+    req.on('data', (/** @type {Buffer} */ chunk) => {
       size += chunk.length;
       if (size > limit) {
         req.destroy();

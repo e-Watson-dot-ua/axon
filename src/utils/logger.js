@@ -18,7 +18,7 @@ export class Logger {
    * @param {Object} [opts]
    * @param {string} [opts.level] minimum level (default: 'info')
    * @param {Object<string, any>} [opts.base] fields included on every line
-   * @param {boolean} [opts.json] emit newline-delimited JSON (default: auto —
+   * @param {boolean} [opts.json] emit newline-delimited JSON (default: auto -
    *   JSON when stdout is not a TTY, pretty text when it is)
    */
   constructor(opts = {}) {
@@ -40,20 +40,35 @@ export class Logger {
   }
 
   /** @param {string} msg @param {Object} [extra] */
-  fatal(msg, extra) { this.#log('fatal', msg, extra); }
+  fatal(msg, extra) {
+    this.#log('fatal', msg, extra);
+  }
   /** @param {string} msg @param {Object} [extra] */
-  error(msg, extra) { this.#log('error', msg, extra); }
+  error(msg, extra) {
+    this.#log('error', msg, extra);
+  }
   /** @param {string} msg @param {Object} [extra] */
-  warn(msg, extra) { this.#log('warn', msg, extra); }
+  warn(msg, extra) {
+    this.#log('warn', msg, extra);
+  }
   /** @param {string} msg @param {Object} [extra] */
-  info(msg, extra) { this.#log('info', msg, extra); }
+  info(msg, extra) {
+    this.#log('info', msg, extra);
+  }
   /** @param {string} msg @param {Object} [extra] */
-  debug(msg, extra) { this.#log('debug', msg, extra); }
+  debug(msg, extra) {
+    this.#log('debug', msg, extra);
+  }
   /** @param {string} msg @param {Object} [extra] */
-  trace(msg, extra) { this.#log('trace', msg, extra); }
+  trace(msg, extra) {
+    this.#log('trace', msg, extra);
+  }
 
   /** @param {string} label */
-  time(label) { this._timers = this._timers ?? {}; this._timers[label] = performance.now(); }
+  time(label) {
+    this._timers = this._timers ?? {};
+    this._timers[label] = performance.now();
+  }
   /** @param {string} label @param {string} [level] */
   timeEnd(label, level = 'info') {
     const start = this._timers?.[label];
@@ -78,6 +93,7 @@ export class Logger {
     const numLevel = LEVELS[level] ?? 30;
     if (numLevel < this.#level) return;
 
+    /** @type {Object<string, any>} */
     const fields = { ...this.#base, ...extra };
 
     let line;
@@ -87,9 +103,8 @@ export class Logger {
       line = JSON.stringify({ level, msg: String(msg), ...fields }) + '\n';
     } else {
       const keys = Object.keys(fields);
-      const suffix = keys.length > 0
-        ? ' ' + keys.map((k) => `${k}=${JSON.stringify(fields[k])}`).join(' ')
-        : '';
+      const suffix =
+        keys.length > 0 ? ' ' + keys.map((k) => `${k}=${JSON.stringify(fields[k])}`).join(' ') : '';
       // Strip CR/LF from the message so a caller-supplied value (path, header,
       // error text) cannot forge extra log lines.
       const safeMsg = typeof msg === 'string' ? msg.replace(/[\r\n]+/g, ' ') : String(msg);

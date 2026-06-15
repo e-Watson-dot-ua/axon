@@ -30,7 +30,11 @@ describe('collectBody', () => {
   });
 
   it('should collect an empty body', async () => {
-    const stream = new Readable({ read() { this.push(null); } });
+    const stream = new Readable({
+      read() {
+        this.push(null);
+      },
+    });
     const buf = await collectBody(/** @type {any} */ (stream));
 
     assert.equal(buf.length, 0);
@@ -39,10 +43,13 @@ describe('collectBody', () => {
   it('should reject when body exceeds limit', async () => {
     const req = mockReq('a'.repeat(100));
 
-    await assert.rejects(() => collectBody(req, { limit: 10 }), (err) => {
-      assert.equal(/** @type {any} */ (err).statusCode, HTTP.PAYLOAD_TOO_LARGE);
-      return true;
-    });
+    await assert.rejects(
+      () => collectBody(req, { limit: 10 }),
+      (err) => {
+        assert.equal(/** @type {any} */ (err).statusCode, HTTP.PAYLOAD_TOO_LARGE);
+        return true;
+      },
+    );
   });
 
   it('should accept body exactly at limit', async () => {

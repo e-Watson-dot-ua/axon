@@ -35,51 +35,75 @@ export function compression(app, opts = {}) {
     /** @type {Buffer[]} */
     const chunks = [];
 
-    ctx.res.write = /** @type {any} */ (function (chunk, encodingOrCb, callback) {
-      if (typeof chunk === 'string') chunk = Buffer.from(chunk, typeof encodingOrCb === 'string' ? encodingOrCb : 'utf8');
-      if (Buffer.isBuffer(chunk)) chunks.push(chunk);
-      if (typeof encodingOrCb === 'function') encodingOrCb();
-      else if (typeof callback === 'function') callback();
-      return true;
-    });
-
-    ctx.res.end = /** @type {any} */ (function (chunk, encodingOrCb, callback) {
-      if (chunk) {
-        if (typeof chunk === 'string') chunk = Buffer.from(chunk, typeof encodingOrCb === 'string' ? encodingOrCb : 'utf8');
+    ctx.res.write = /** @type {any} */ (
+      function (
+        /** @type {any} */ chunk,
+        /** @type {any} */ encodingOrCb,
+        /** @type {any} */ callback,
+      ) {
+        if (typeof chunk === 'string')
+          chunk = Buffer.from(
+            chunk,
+            /** @type {BufferEncoding} */ (
+              typeof encodingOrCb === 'string' ? encodingOrCb : 'utf8'
+            ),
+          );
         if (Buffer.isBuffer(chunk)) chunks.push(chunk);
+        if (typeof encodingOrCb === 'function') encodingOrCb();
+        else if (typeof callback === 'function') callback();
+        return true;
       }
+    );
 
-      const body = Buffer.concat(chunks);
-      const cb = typeof encodingOrCb === 'function' ? encodingOrCb : callback;
-
-      // This response is content-negotiated regardless of the branch taken.
-      appendVary(ctx.res, 'Accept-Encoding');
-
-      // Skip compression for too-small, non-compressible, or already-encoded
-      // bodies (re-compressing an encoded body would corrupt it).
-      const contentType = /** @type {string} */ (ctx.res.getHeader('content-type') ?? '');
-      const alreadyEncoded = ctx.res.getHeader('content-encoding');
-      if (alreadyEncoded || !COMPRESSIBLE_RE.test(contentType) || body.length < threshold) {
-        ctx.res.setHeader('Content-Length', body.length);
-        return origEnd(body, cb);
-      }
-
-      // Compress asynchronously so a large body never blocks the event loop.
-      const compressor = encoding === 'gzip' ? zlib.gzip : zlib.deflate;
-      compressor(body, (err, compressed) => {
-        if (err) {
-          // Compression failed — fall back to the raw body.
-          ctx.res.setHeader('Content-Length', body.length);
-          origEnd(body, cb);
-          return;
+    ctx.res.end = /** @type {any} */ (
+      function (
+        /** @type {any} */ chunk,
+        /** @type {any} */ encodingOrCb,
+        /** @type {any} */ callback,
+      ) {
+        if (chunk) {
+          if (typeof chunk === 'string')
+            chunk = Buffer.from(
+              chunk,
+              /** @type {BufferEncoding} */ (
+                typeof encodingOrCb === 'string' ? encodingOrCb : 'utf8'
+              ),
+            );
+          if (Buffer.isBuffer(chunk)) chunks.push(chunk);
         }
-        ctx.res.removeHeader('content-length');
-        ctx.res.setHeader('Content-Encoding', encoding);
-        ctx.res.setHeader('Content-Length', compressed.length);
-        origEnd(compressed, cb);
-      });
-      return ctx.res;
-    });
+
+        const body = Buffer.concat(chunks);
+        const cb = typeof encodingOrCb === 'function' ? encodingOrCb : callback;
+
+        // This response is content-negotiated regardless of the branch taken.
+        appendVary(ctx.res, 'Accept-Encoding');
+
+        // Skip compression for too-small, non-compressible, or already-encoded
+        // bodies (re-compressing an encoded body would corrupt it).
+        const contentType = /** @type {string} */ (ctx.res.getHeader('content-type') ?? '');
+        const alreadyEncoded = ctx.res.getHeader('content-encoding');
+        if (alreadyEncoded || !COMPRESSIBLE_RE.test(contentType) || body.length < threshold) {
+          ctx.res.setHeader('Content-Length', body.length);
+          return origEnd(body, cb);
+        }
+
+        // Compress asynchronously so a large body never blocks the event loop.
+        const compressor = encoding === 'gzip' ? zlib.gzip : zlib.deflate;
+        compressor(body, (err, compressed) => {
+          if (err) {
+            // Compression failed - fall back to the raw body.
+            ctx.res.setHeader('Content-Length', body.length);
+            origEnd(body, cb);
+            return;
+          }
+          ctx.res.removeHeader('content-length');
+          ctx.res.setHeader('Content-Encoding', encoding);
+          ctx.res.setHeader('Content-Length', compressed.length);
+          origEnd(compressed, cb);
+        });
+        return ctx.res;
+      }
+    );
 
     await next();
   });

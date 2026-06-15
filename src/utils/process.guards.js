@@ -1,6 +1,6 @@
 /**
  * Install last-resort process-level handlers so a stray rejection or thrown
- * error is logged rather than crashing the process silently. Opt-in — call once
+ * error is logged rather than crashing the process silently. Opt-in - call once
  * at startup. When an `app` is supplied, fatal signals/exceptions drain it first.
  *
  * @param {Object} [opts]
@@ -15,6 +15,7 @@ export function installProcessGuards(opts = {}) {
   const emit = (/** @type {string} */ msg, /** @type {any} */ err) => {
     const extra = { err: String(err?.stack ?? err) };
     if (typeof logger.error === 'function') logger.error(msg, extra);
+    // eslint-disable-next-line no-console
     else console.error(msg, extra);
   };
 
@@ -33,8 +34,9 @@ export function installProcessGuards(opts = {}) {
 
   const handleSignals = opts.handleSignals ?? Boolean(opts.app);
   if (handleSignals && opts.app) {
+    const app = opts.app;
     const shutdown = () => {
-      opts.app.close().finally(() => process.exit(0));
+      app.close().finally(() => process.exit(0));
     };
     process.once('SIGTERM', shutdown);
     process.once('SIGINT', shutdown);

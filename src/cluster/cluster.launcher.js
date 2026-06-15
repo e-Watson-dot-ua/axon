@@ -45,7 +45,7 @@ export function launch(workerFn, opts = {}) {
       // eslint-disable-next-line no-console
       console.error(
         `Worker ${worker.process.pid} exited (code=${code}, signal=${signal}). ` +
-        `Restarting in ${delay}ms...`,
+          `Restarting in ${delay}ms...`,
       );
 
       setTimeout(() => {

@@ -143,9 +143,7 @@ describe('Axon — routing', () => {
 
   it('should support method chaining', () => {
     app = createApp();
-    const ret = app
-      .get('/a', (ctx) => ctx.send('a'))
-      .post('/b', (ctx) => ctx.send('b'));
+    const ret = app.get('/a', (ctx) => ctx.send('a')).post('/b', (ctx) => ctx.send('b'));
 
     assert.equal(ret, app);
   });
@@ -500,7 +498,9 @@ describe('Axon — validation', () => {
           properties: { name: { type: 'string', minLength: 1 } },
         },
       },
-      handler(ctx) { ctx.send({ ok: true }); },
+      handler(ctx) {
+        ctx.send({ ok: true });
+      },
     });
     const { port } = await app.listen({ port: 0 });
 
@@ -524,7 +524,9 @@ describe('Axon — validation', () => {
           properties: { name: { type: 'string', minLength: 1 } },
         },
       },
-      handler(ctx) { ctx.send({ ok: true }); },
+      handler(ctx) {
+        ctx.send({ ok: true });
+      },
     });
     const { port } = await app.listen({ port: 0 });
 
@@ -541,7 +543,9 @@ describe('Axon — validation', () => {
     app.setValidator(() => ({ valid: false, errors: ['custom error'] }));
     app.post('/test', {
       schema: { body: { type: 'object' } },
-      handler(ctx) { ctx.send('ok'); },
+      handler(ctx) {
+        ctx.send('ok');
+      },
     });
     const { port } = await app.listen({ port: 0 });
 

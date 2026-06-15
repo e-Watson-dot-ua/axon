@@ -1,5 +1,5 @@
 /**
- * Access-log middleware — emits one structured line per request once the
+ * Access-log middleware - emits one structured line per request once the
  * response is finished. Status >= 500 logs at `error`, >= 400 at `warn`.
  *
  * @param {Object} [opts]

@@ -8,7 +8,7 @@ import { parseUrlencoded } from './urlencoded.parser.js';
  *
  * @param {import('node:http').IncomingMessage} req
  * @param {Object} [opts]
- * @param {number} [opts.limit] — max body size in bytes
+ * @param {number} [opts.limit] - max body size in bytes
  * @returns {Promise<any>}
  */
 export async function parseBody(req, opts = {}) {

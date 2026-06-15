@@ -3,7 +3,7 @@ import { RadixTrie } from './radix.trie.js';
 const HTTP_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'];
 
 /**
- * Router facade — one trie per HTTP method.
+ * Router facade - one trie per HTTP method.
  */
 export class Router {
   /** @type {Map<string, RadixTrie>} */
@@ -17,7 +17,7 @@ export class Router {
 
   /**
    * Register a route.
-   * @param {string} method — HTTP method (uppercase)
+   * @param {string} method - HTTP method (uppercase)
    * @param {string} path
    * @param {any} data
    */

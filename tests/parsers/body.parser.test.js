@@ -14,7 +14,12 @@ import { HTTP } from '../../src/utils/http.status.js';
  */
 function mockReq(body, contentType) {
   const buf = Buffer.from(body, 'utf8');
-  const stream = new Readable({ read() { this.push(buf); this.push(null); } });
+  const stream = new Readable({
+    read() {
+      this.push(buf);
+      this.push(null);
+    },
+  });
   stream.headers = { 'content-type': contentType };
   return /** @type {any} */ (stream);
 }
@@ -26,10 +31,13 @@ describe('parseJson', () => {
   });
 
   it('should throw 400 on invalid JSON', () => {
-    assert.throws(() => parseJson(Buffer.from('not json')), (err) => {
-      assert.equal(/** @type {any} */ (err).statusCode, HTTP.BAD_REQUEST);
-      return true;
-    });
+    assert.throws(
+      () => parseJson(Buffer.from('not json')),
+      (err) => {
+        assert.equal(/** @type {any} */ (err).statusCode, HTTP.BAD_REQUEST);
+        return true;
+      },
+    );
   });
 });
 
@@ -91,7 +99,11 @@ describe('parseBody (dispatcher)', () => {
   });
 
   it('should return undefined for empty body', async () => {
-    const stream = new Readable({ read() { this.push(null); } });
+    const stream = new Readable({
+      read() {
+        this.push(null);
+      },
+    });
     stream.headers = { 'content-type': 'application/json' };
     const result = await parseBody(/** @type {any} */ (stream));
     assert.equal(result, undefined);

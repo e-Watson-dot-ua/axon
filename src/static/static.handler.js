@@ -71,13 +71,13 @@ export function createStaticHandler(rootDir, opts = {}) {
     ctx.header('Cache-Control', 'public, max-age=0');
     ctx.header('Accept-Ranges', 'bytes');
 
-    // Conditional request — honor a matching If-None-Match (list / weak / *).
+    // Conditional request - honor a matching If-None-Match (list / weak / *).
     if (etagMatches(ctx.headers['if-none-match'], etag)) {
       ctx.status(HTTP.NOT_MODIFIED).send('');
       return;
     }
 
-    // Range request — serve a single byte range as 206, or 416 if unsatisfiable.
+    // Range request - serve a single byte range as 206, or 416 if unsatisfiable.
     const range = parseRange(ctx.headers['range'], stat.size);
     if (range === 'invalid') {
       ctx.header('Content-Range', `bytes */${stat.size}`);

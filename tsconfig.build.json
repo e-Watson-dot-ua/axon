@@ -10,7 +10,8 @@
     "target": "ESNext",
     "resolveJsonModule": true,
     "outDir": "types",
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "maxNodeModuleJsDepth": 0
   },
   "include": ["src/**/*.js"],
   "exclude": ["node_modules", "tests", "benchmarks"]

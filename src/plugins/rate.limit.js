@@ -4,7 +4,7 @@ import { HTTP } from '../utils/http.status.js';
 /**
  * Fixed-window rate limiter plugin.
  *
- * The default store is an in-process `Map`, so limits are **per process** — under
+ * The default store is an in-process `Map`, so limits are **per process** - under
  * cluster mode or multiple instances the effective limit is `max × instances`.
  * For a shared limit across instances, pass a custom `store` backed by Redis or
  * similar. A store must implement async-friendly `get(key)` / `set(key, entry)`
@@ -25,7 +25,7 @@ export function rateLimit(app, opts = {}) {
   /** @type {any} */
   const store = opts.store ?? new Map();
 
-  // Periodic cleanup — only for the built-in Map store; external stores
+  // Periodic cleanup - only for the built-in Map store; external stores
   // (e.g. Redis) are expected to expire entries themselves.
   if (store instanceof Map) {
     const cleanup = setInterval(() => {
